@@ -1,0 +1,10 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Microservicio.Vuelos.DataAccess.Common
+{
+    internal class PagedResult
+    {
+    }
+}
