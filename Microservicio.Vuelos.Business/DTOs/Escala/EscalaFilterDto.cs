@@ -1,10 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Microservicio.Vuelos.Business.DTOs.Escala;
 
-namespace Microservicio.Vuelos.Business.DTOs.Escala
+public class EscalaFilterDto
 {
-    internal class EscalaFilterDto
-    {
-    }
+    public int? IdVuelo { get; set; }
+    public int? IdAeropuerto { get; set; }
+    public int? Orden { get; set; }
+    public string? TipoEscala { get; set; }
+    public string? Estado { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
 }

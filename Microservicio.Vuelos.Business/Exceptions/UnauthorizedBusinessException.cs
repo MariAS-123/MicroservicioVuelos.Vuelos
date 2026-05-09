@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace Microservicio.Vuelos.Business.Exceptions;
 
-namespace Microservicio.Vuelos.Business.Exceptions
+public class UnauthorizedBusinessException : BusinessException
 {
-    internal class UnauthorizedBusinessException
+    public UnauthorizedBusinessException(string message)
+        : base("UNAUTHORIZED", message, 401)
     {
     }
 }
