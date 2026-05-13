@@ -34,6 +34,11 @@ public static class ServiceCollectionExtensions
         // NUEVO: registrar HttpClient y servicio de integración con MS Aeropuertos
         RegisterAeropuertoIntegration(services, configuration);
 
+        // NUEVO: QueryRepositories del Booking — clases concretas sin interfaz
+        // no son detectadas por RegisterRepositoriesByConvention
+        services.AddScoped<Microservicio.Vuelos.DataAccess.Queries.VueloQueryRepository>();
+        services.AddScoped<Microservicio.Vuelos.DataAccess.Queries.AsientoQueryRepository>();
+
         return services;
     }
 

@@ -12,6 +12,10 @@ namespace Microservicio.Vuelos.Api.Integrations;
 ///
 /// La URL base viene de appsettings.json:
 ///   "ServiciosExternos": { "AeropuertosBaseUrl": "http://localhost:5003" }
+///
+/// MÉTODOS AÑADIDOS PARA BOOKING:
+///   GetAeropuertoPorIataAsync — resuelve código IATA a aeropuerto completo
+///   BuscarAeropuertosAsync    — autocompletado origen/destino (endpoint 1)
 /// </summary>
 public class AeropuertoIntegrationService : IAeropuertoIntegrationService
 {
@@ -25,6 +29,10 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
         _httpClient = httpClientFactory.CreateClient("aeropuertos");
         _logger = logger;
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET POR ID — usado por VueloService para validar origen/destino
+    // ─────────────────────────────────────────────────────────────────────────
 
     public async Task<AeropuertoIntegrationDto?> GetAeropuertoAsync(
         int idAeropuerto,
@@ -44,11 +52,11 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
                 return null;
             }
 
-            // Deserializa solo los campos que necesita MS Vuelos
-            var dto = await response.Content.ReadFromJsonAsync<AeropuertoIntegrationDto>(
-                cancellationToken: cancellationToken);
+            var wrapper = await response.Content
+                .ReadFromJsonAsync<ApiResponseWrapper<AeropuertoIntegrationDto>>(
+                    cancellationToken: cancellationToken);
 
-            return dto;
+            return wrapper?.Data;
         }
         catch (Exception ex)
         {
@@ -57,5 +65,109 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
                 idAeropuerto);
             return null;
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET POR IATA — usado por BookingFlightSearchService para resolver
+    // códigos IATA (GYE, UIO) a IDs internos antes de buscar vuelos
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public async Task<AeropuertoIntegrationDto?> GetAeropuertoPorIataAsync(
+        string codigoIata,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync(
+                $"/api/v1/aeropuertos?search={Uri.EscapeDataString(codigoIata)}&limit=1",
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "MS Aeropuertos retornó {StatusCode} para codigo_iata={CodigoIata}",
+                    (int)response.StatusCode, codigoIata);
+                return null;
+            }
+
+            var wrapper = await response.Content
+                .ReadFromJsonAsync<ApiResponseWrapper<List<AeropuertoIntegrationDto>>>(
+                    cancellationToken: cancellationToken);
+
+            // Busca coincidencia exacta por IATA — el search puede traer más de uno
+            return wrapper?.Data?.FirstOrDefault(a =>
+                a.CodigoIata.Equals(codigoIata, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al consultar MS Aeropuertos para codigo_iata={CodigoIata}",
+                codigoIata);
+            return null;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // BUSCAR — usado por BookingAirportService para el autocompletado
+    // Endpoint 1: GET /api/v1/booking/aeropuertos?search=...&pais=...&limit=...
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public async Task<List<AeropuertoIntegrationDto>> BuscarAeropuertosAsync(
+        string? search,
+        string? pais,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Construir query string solo con los params que vienen
+            var queryParams = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                queryParams.Add($"search={Uri.EscapeDataString(search)}");
+
+            if (!string.IsNullOrWhiteSpace(pais))
+                queryParams.Add($"pais={Uri.EscapeDataString(pais)}");
+
+            queryParams.Add($"limit={limit}");
+
+            var url = "/api/v1/aeropuertos?" + string.Join("&", queryParams);
+
+            var response = await _httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "MS Aeropuertos retornó {StatusCode} al buscar aeropuertos (search={Search}, pais={Pais})",
+                    (int)response.StatusCode, search, pais);
+                return [];
+            }
+
+            var wrapper = await response.Content
+                .ReadFromJsonAsync<ApiResponseWrapper<List<AeropuertoIntegrationDto>>>(
+                    cancellationToken: cancellationToken);
+
+            return wrapper?.Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Error al buscar aeropuertos en MS Aeropuertos (search={Search}, pais={Pais})",
+                search, pais);
+            return [];
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPER PRIVADO — wrapper genérico para deserializar ApiResponse del MS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Mapea el wrapper estándar { status, mensaje, data } que retorna MS Aeropuertos.
+    /// Solo necesitamos el campo data — status y mensaje se ignoran aquí.
+    /// </summary>
+    private sealed class ApiResponseWrapper<T>
+    {
+        public T? Data { get; set; }
     }
 }
