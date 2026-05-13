@@ -53,6 +53,7 @@ public static class ServiceCollectionExtensions
                 $"La cadena de conexión '{ConnectionStringName}' no está configurada.");
 
         // CAMBIO: VuelosDbContext en lugar de SistemaVuelosDBContext
+        /*
         services.AddDbContext<VuelosDbContext>(options =>
         {
             options.UseNpgsql(connectionString, npgsqlOptions =>
@@ -62,6 +63,11 @@ public static class ServiceCollectionExtensions
                     maxRetryDelay: TimeSpan.FromSeconds(10),
                     errorCodesToAdd: null);
             });
+        });
+        */
+        services.AddDbContext<VuelosDbContext>(options =>
+        {
+            options.UseNpgsql(connectionString);
         });
     }
 
