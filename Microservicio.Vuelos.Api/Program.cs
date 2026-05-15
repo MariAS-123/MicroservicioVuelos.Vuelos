@@ -8,6 +8,9 @@ using Microservicio.Vuelos.Api.Middleware;
 ///     TokenBlacklistService es EXCLUSIVO del MS Seguridad.
 ///     Este MS solo valida la firma del JWT — no gestiona logout ni blacklist.
 /// </summary>
+/// 
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
