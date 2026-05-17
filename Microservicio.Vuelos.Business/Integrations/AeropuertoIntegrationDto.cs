@@ -9,14 +9,16 @@ public class AeropuertoIntegrationDto
 {
     public int IdAeropuerto { get; set; }
     public string CodigoIata { get; set; } = null!;
-    public string CodigoIcao { get; set; } = null!;
+    public string? CodigoIcao { get; set; }
     public string Nombre { get; set; } = null!;
-    public string Estado { get; set; } = null!;
-    public string ZonaHoraria { get; set; } = null!;
-    public decimal Latitud { get; set; }
-    public decimal Longitud { get; set; }
-    public AeropuertoCiudadIntegrationDto Ciudad { get; set; } = null!;
-    public AeropuertoPaisIntegrationDto Pais { get; set; } = null!;
+    public string? Estado { get; set; }
+    public string? ZonaHoraria { get; set; }
+    public decimal? Latitud { get; set; }
+    public decimal? Longitud { get; set; }
+    public int? IdCiudad { get; set; }        // ← agregar
+    public int? IdPais { get; set; }          // ← agregar
+    public AeropuertoCiudadIntegrationDto? Ciudad { get; set; }  // ← nullable
+    public AeropuertoPaisIntegrationDto? Pais { get; set; }      // ← nullable
 }
 
 public class AeropuertoCiudadIntegrationDto

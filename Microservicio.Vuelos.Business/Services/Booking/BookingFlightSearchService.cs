@@ -114,16 +114,16 @@ public class BookingFlightSearchService : IBookingFlightSearchService
                 IdAeropuerto = aeropuertoOrigen.IdAeropuerto,
                 CodigoIata = aeropuertoOrigen.CodigoIata,
                 Nombre = aeropuertoOrigen.Nombre,
-                Ciudad = aeropuertoOrigen.Ciudad.Nombre,
-                Pais = aeropuertoOrigen.Pais.Nombre
+                Ciudad = aeropuertoOrigen.Ciudad?.Nombre ?? string.Empty,
+                Pais = aeropuertoOrigen.Pais?.Nombre ?? string.Empty
             },
             Destino = new BookingAeropuertoCortoDto
             {
                 IdAeropuerto = aeropuertoDestino.IdAeropuerto,
                 CodigoIata = aeropuertoDestino.CodigoIata,
                 Nombre = aeropuertoDestino.Nombre,
-                Ciudad = aeropuertoDestino.Ciudad.Nombre,
-                Pais = aeropuertoDestino.Pais.Nombre
+                Ciudad = aeropuertoDestino.Ciudad?.Nombre ?? string.Empty,
+                Pais = aeropuertoDestino.Pais?.Nombre ?? string.Empty
             }
         }).ToList();
 
@@ -155,18 +155,17 @@ public class BookingFlightSearchService : IBookingFlightSearchService
         if (vuelo == null)
             throw new NotFoundException($"Vuelo con id {idVuelo} no encontrado.");
 
-        // Enriquecer aeropuertos en paralelo
-        var tareaOrigen = _aeropuertoIntegration.GetAeropuertoAsync(vuelo.IdAeropuertoOrigen, cancellationToken);
-        var tareaDestino = _aeropuertoIntegration.GetAeropuertoAsync(vuelo.IdAeropuertoDestino, cancellationToken);
-        await Task.WhenAll(tareaOrigen, tareaDestino);
-
-        var origen = tareaOrigen.Result;
-        var destino = tareaDestino.Result;
+        var origen = await _aeropuertoIntegration.GetAeropuertoAsync(
+            vuelo.IdAeropuertoOrigen, cancellationToken);
+        var destino = await _aeropuertoIntegration.GetAeropuertoAsync(
+            vuelo.IdAeropuertoDestino, cancellationToken);
 
         if (origen == null)
-            throw new NotFoundException($"Aeropuerto de origen con id {vuelo.IdAeropuertoOrigen} no encontrado.");
+            throw new NotFoundException(
+                $"Aeropuerto de origen con id {vuelo.IdAeropuertoOrigen} no encontrado.");
         if (destino == null)
-            throw new NotFoundException($"Aeropuerto de destino con id {vuelo.IdAeropuertoDestino} no encontrado.");
+            throw new NotFoundException(
+                $"Aeropuerto de destino con id {vuelo.IdAeropuertoDestino} no encontrado.");
 
         return new BookingVueloDetalleResponseDto
         {
@@ -238,8 +237,8 @@ public class BookingFlightSearchService : IBookingFlightSearchService
                     CodigoIata = aeropuerto.CodigoIata,
                     CodigoIcao = aeropuerto.CodigoIcao,
                     Nombre = aeropuerto.Nombre,
-                    Ciudad = aeropuerto.Ciudad.Nombre,
-                    Pais = aeropuerto.Pais.Nombre
+                    Ciudad = aeropuerto.Ciudad?.Nombre ?? string.Empty,
+                    Pais = aeropuerto.Pais?.Nombre ?? string.Empty
                 }
             });
         }
@@ -266,18 +265,13 @@ public class BookingFlightSearchService : IBookingFlightSearchService
         if (idVuelo <= 0)
             throw new ValidationException("El id del vuelo debe ser mayor que 0.");
 
-        // Obtener mapa completo y resumen en paralelo
-        var tareaAsientos = _asientoQuery.ObtenerMapaPorVueloAsync(idVuelo, cancellationToken);
-        var tareaResumen = _asientoQuery.ObtenerResumenOcupacionAsync(idVuelo, cancellationToken);
-        await Task.WhenAll(tareaAsientos, tareaResumen);
-
-        var asientos = tareaAsientos.Result;
-        var resumen = tareaResumen.Result;
+        // ← Ejecutar secuencialmente, NO en paralelo
+        var asientos = await _asientoQuery.ObtenerMapaPorVueloAsync(idVuelo, cancellationToken);
+        var resumen = await _asientoQuery.ObtenerResumenOcupacionAsync(idVuelo, cancellationToken);
 
         if (resumen == null)
             throw new NotFoundException($"Vuelo con id {idVuelo} no encontrado.");
 
-        // Aplicar filtros opcionales en memoria
         var asientosFiltrados = asientos.AsEnumerable();
 
         if (!string.IsNullOrWhiteSpace(clase))
@@ -287,7 +281,6 @@ public class BookingFlightSearchService : IBookingFlightSearchService
         if (disponible.HasValue)
             asientosFiltrados = asientosFiltrados.Where(a => a.Disponible == disponible.Value);
 
-        // Obtener número de vuelo
         var detalle = await _vueloQuery.ObtenerDetalleBookingAsync(idVuelo, cancellationToken);
 
         return new BookingAsientoResponseDto
@@ -321,12 +314,12 @@ public class BookingFlightSearchService : IBookingFlightSearchService
         {
             IdAeropuerto = a.IdAeropuerto,
             CodigoIata = a.CodigoIata,
-            CodigoIcao = a.CodigoIcao,
+            CodigoIcao = a.CodigoIcao ?? string.Empty,
             Nombre = a.Nombre,
-            ZonaHoraria = a.ZonaHoraria,
-            Latitud = a.Latitud,
-            Longitud = a.Longitud,
-            Ciudad = new BookingCiudadDto
+            ZonaHoraria = a.ZonaHoraria ?? string.Empty,
+            Latitud = a.Latitud ?? 0,
+            Longitud = a.Longitud ?? 0,
+            Ciudad = a.Ciudad is null ? new BookingCiudadDto() : new BookingCiudadDto
             {
                 IdCiudad = a.Ciudad.IdCiudad,
                 Nombre = a.Ciudad.Nombre,
@@ -334,7 +327,7 @@ public class BookingFlightSearchService : IBookingFlightSearchService
                 Latitud = a.Ciudad.Latitud,
                 Longitud = a.Ciudad.Longitud
             },
-            Pais = new BookingPaisDto
+            Pais = a.Pais is null ? new BookingPaisDto() : new BookingPaisDto
             {
                 IdPais = a.Pais.IdPais,
                 CodigoIso2 = a.Pais.CodigoIso2,

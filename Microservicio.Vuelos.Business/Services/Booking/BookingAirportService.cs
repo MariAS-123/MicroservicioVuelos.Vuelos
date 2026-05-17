@@ -35,13 +35,13 @@ public class BookingAirportService : IBookingAirportService
         {
             IdAeropuerto = a.IdAeropuerto,
             CodigoIata = a.CodigoIata,
-            CodigoIcao = a.CodigoIcao,
+            CodigoIcao = a.CodigoIcao ?? string.Empty,
             Nombre = a.Nombre,
-            ZonaHoraria = a.ZonaHoraria,
-            Latitud = a.Latitud,
-            Longitud = a.Longitud,
-            Estado = a.Estado,
-            Ciudad = new BookingCiudadDto
+            ZonaHoraria = a.ZonaHoraria ?? string.Empty,
+            Latitud = a.Latitud ?? 0,
+            Longitud = a.Longitud ?? 0,
+            Estado = a.Estado ?? string.Empty,
+            Ciudad = a.Ciudad is null ? new BookingCiudadDto() : new BookingCiudadDto
             {
                 IdCiudad = a.Ciudad.IdCiudad,
                 Nombre = a.Ciudad.Nombre,
@@ -49,7 +49,7 @@ public class BookingAirportService : IBookingAirportService
                 Latitud = a.Ciudad.Latitud,
                 Longitud = a.Ciudad.Longitud
             },
-            Pais = new BookingPaisDto
+            Pais = a.Pais is null ? new BookingPaisDto() : new BookingPaisDto
             {
                 IdPais = a.Pais.IdPais,
                 CodigoIso2 = a.Pais.CodigoIso2,

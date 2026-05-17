@@ -73,13 +73,13 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
     // ─────────────────────────────────────────────────────────────────────────
 
     public async Task<AeropuertoIntegrationDto?> GetAeropuertoPorIataAsync(
-        string codigoIata,
-        CancellationToken cancellationToken = default)
+    string codigoIata,
+    CancellationToken cancellationToken = default)
     {
         try
         {
             var response = await _httpClient.GetAsync(
-                $"/api/v1/aeropuertos?search={Uri.EscapeDataString(codigoIata)}&limit=1",
+                $"/api/v1/aeropuertos?codigo_iata={Uri.EscapeDataString(codigoIata)}",
                 cancellationToken);
 
             if (!response.IsSuccessStatusCode)
@@ -90,12 +90,12 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
                 return null;
             }
 
+            // MS Aeropuertos devuelve PagedResult con items, no lista directa
             var wrapper = await response.Content
-                .ReadFromJsonAsync<ApiResponseWrapper<List<AeropuertoIntegrationDto>>>(
+                .ReadFromJsonAsync<ApiResponseWrapper<AeropuertosPagedResult>>(
                     cancellationToken: cancellationToken);
 
-            // Busca coincidencia exacta por IATA — el search puede traer más de uno
-            return wrapper?.Data?.FirstOrDefault(a =>
+            return wrapper?.Data?.Items?.FirstOrDefault(a =>
                 a.CodigoIata.Equals(codigoIata, StringComparison.OrdinalIgnoreCase));
         }
         catch (Exception ex)
@@ -105,6 +105,13 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
                 codigoIata);
             return null;
         }
+    }
+
+    // ← Agregar esta clase privada en el mismo archivo
+    private class AeropuertosPagedResult
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("items")]
+        public List<AeropuertoIntegrationDto> Items { get; set; } = [];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -120,16 +127,15 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
     {
         try
         {
-            // Construir query string solo con los params que vienen
             var queryParams = new List<string>();
+            queryParams.Add($"page=1&page_size={limit}");
 
+            // MS Aeropuertos usa 'nombre' y 'codigo_iata', no 'search'
             if (!string.IsNullOrWhiteSpace(search))
-                queryParams.Add($"search={Uri.EscapeDataString(search)}");
-
-            if (!string.IsNullOrWhiteSpace(pais))
-                queryParams.Add($"pais={Uri.EscapeDataString(pais)}");
-
-            queryParams.Add($"limit={limit}");
+            {
+                queryParams.Add($"nombre={Uri.EscapeDataString(search)}");
+                queryParams.Add($"codigo_iata={Uri.EscapeDataString(search)}");
+            }
 
             var url = "/api/v1/aeropuertos?" + string.Join("&", queryParams);
 
@@ -138,26 +144,26 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning(
-                    "MS Aeropuertos retornó {StatusCode} al buscar aeropuertos (search={Search}, pais={Pais})",
-                    (int)response.StatusCode, search, pais);
+                    "MS Aeropuertos retornó {StatusCode} al buscar aeropuertos",
+                    (int)response.StatusCode);
                 return [];
             }
 
+            // MS Aeropuertos devuelve PagedResult con items, no lista directa
             var wrapper = await response.Content
-                .ReadFromJsonAsync<ApiResponseWrapper<List<AeropuertoIntegrationDto>>>(
+                .ReadFromJsonAsync<ApiResponseWrapper<AeropuertosPagedResult>>(
                     cancellationToken: cancellationToken);
 
-            return wrapper?.Data ?? [];
+            return wrapper?.Data?.Items ?? [];
         }
         catch (Exception ex)
         {
             _logger.LogError(ex,
-                "Error al buscar aeropuertos en MS Aeropuertos (search={Search}, pais={Pais})",
-                search, pais);
+                "Error al buscar aeropuertos en MS Aeropuertos (search={Search})",
+                search);
             return [];
         }
     }
-
     // ─────────────────────────────────────────────────────────────────────────
     // HELPER PRIVADO — wrapper genérico para deserializar ApiResponse del MS
     // ─────────────────────────────────────────────────────────────────────────
