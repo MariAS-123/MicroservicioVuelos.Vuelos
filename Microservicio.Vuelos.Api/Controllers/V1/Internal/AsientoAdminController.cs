@@ -94,6 +94,44 @@ public class AsientoAdminController : ControllerBase
             ApiResponse<AsientoResponseDto>.Ok(result, "Asiento creado correctamente."));
     }
 
+
+    // En el controller de asientos de MS Vuelos
+// Controllers/V1/Internal/AsientoInternalController.cs
+
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/internal/vuelos/{id_vuelo:int}/asientos")]
+[AllowAnonymous]  // ← solo accesible internamente
+public class AsientoInternalController : ControllerBase
+{
+    private readonly IAsientoService _asientoService;
+
+    public AsientoInternalController(IAsientoService asientoService)
+    {
+        _asientoService = asientoService;
+    }
+
+        /// <summary>
+        /// Bloquea un asiento — llamado internamente por MS ReservasF al pagar.
+        /// PATCH /api/v1/internal/vuelos/{id_vuelo}/asientos/{id_asiento}/bloquear
+        /// </summary>
+        [HttpPatch("{id_asiento:int}/bloquear")]
+        public async Task<IActionResult> Bloquear(
+            [FromRoute] int id_vuelo,
+            [FromRoute] int id_asiento)
+        {
+            var result = await _asientoService.UpdateAsync(
+                id_asiento,
+                new AsientoUpdateRequestDto { Disponible = false },
+                "SYSTEM_RESERVAS");
+
+            return result is null
+                ? NotFound(new { success = false, message = "Asiento no encontrado." })
+                : Ok(new { success = true });
+        }
+    }
+
+
     // PATCH /vuelos/{id_vuelo}/asientos/{id_asiento} — actualiza disponibilidad
     // ADMINISTRADOR y AEROLINEA pueden marcar asientos como disponibles/no disponibles
     [HttpPatch("{id_asiento:int}")]
