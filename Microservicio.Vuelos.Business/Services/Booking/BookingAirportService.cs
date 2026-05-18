@@ -41,21 +41,32 @@ public class BookingAirportService : IBookingAirportService
             Latitud = a.Latitud ?? 0,
             Longitud = a.Longitud ?? 0,
             Estado = a.Estado ?? string.Empty,
-            Ciudad = a.Ciudad is null ? new BookingCiudadDto() : new BookingCiudadDto
+            Ciudad = a.Ciudad is not null ? new BookingCiudadDto
             {
                 IdCiudad = a.Ciudad.IdCiudad,
                 Nombre = a.Ciudad.Nombre,
                 ZonaHoraria = a.Ciudad.ZonaHoraria,
                 Latitud = a.Ciudad.Latitud,
                 Longitud = a.Ciudad.Longitud
+            } : new BookingCiudadDto
+            {
+                IdCiudad = a.IdCiudad ?? 0,  // ← usar el integer directo
+                Nombre = string.Empty,
+                ZonaHoraria = string.Empty
             },
-            Pais = a.Pais is null ? new BookingPaisDto() : new BookingPaisDto
+            Pais = a.Pais is not null ? new BookingPaisDto
             {
                 IdPais = a.Pais.IdPais,
-                CodigoIso2 = a.Pais.CodigoIso2,
-                CodigoIso3 = a.Pais.CodigoIso3,
+                CodigoIso2 = a.Pais.CodigoIso2 ?? string.Empty,
+                CodigoIso3 = a.Pais.CodigoIso3 ?? string.Empty,
                 Nombre = a.Pais.Nombre,
                 Continente = a.Pais.Continente
+            } : new BookingPaisDto
+            {
+                IdPais = a.IdPais ?? 0,  // ← usar el integer directo
+                CodigoIso2 = string.Empty,
+                CodigoIso3 = string.Empty,
+                Nombre = string.Empty
             }
         }).ToList();
     }
