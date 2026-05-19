@@ -130,12 +130,13 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
             var queryParams = new List<string>();
             queryParams.Add($"page=1&page_size={limit}");
 
-            // MS Aeropuertos usa 'nombre' y 'codigo_iata', no 'search'
+            // search = nombre del aeropuerto
             if (!string.IsNullOrWhiteSpace(search))
-            {
                 queryParams.Add($"nombre={Uri.EscapeDataString(search)}");
-                queryParams.Add($"codigo_iata={Uri.EscapeDataString(search)}");
-            }
+
+            // pais = id del pais (viene como string desde el controller)
+            if (!string.IsNullOrWhiteSpace(pais) && int.TryParse(pais, out var idPais))
+                queryParams.Add($"id_pais={idPais}");
 
             var url = "/api/v1/aeropuertos?" + string.Join("&", queryParams);
 
@@ -149,7 +150,6 @@ public class AeropuertoIntegrationService : IAeropuertoIntegrationService
                 return [];
             }
 
-            // MS Aeropuertos devuelve PagedResult con items, no lista directa
             var wrapper = await response.Content
                 .ReadFromJsonAsync<ApiResponseWrapper<AeropuertosPagedResult>>(
                     cancellationToken: cancellationToken);

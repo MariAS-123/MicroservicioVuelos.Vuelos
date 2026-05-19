@@ -27,13 +27,13 @@ public class BookingAeropuertosController : ControllerBase
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<object>>> BuscarAeropuertos(
-        [FromQuery] string? search,
-        [FromQuery] string? pais,
+        [FromQuery] string? nombre,
+        [FromQuery] int? idPais,
         [FromQuery] int limit = 10,
         CancellationToken cancellationToken = default)
     {
         var result = await _bookingAirportService.BuscarAeropuertosAsync(
-            search, pais, limit, cancellationToken);
+            nombre, idPais?.ToString(), limit, cancellationToken);
 
         return Ok(ApiResponse<object>.Ok(result, "Operacion exitosa"));
     }
