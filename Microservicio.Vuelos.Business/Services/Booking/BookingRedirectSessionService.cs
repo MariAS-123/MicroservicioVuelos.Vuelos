@@ -61,8 +61,7 @@ public class BookingRedirectSessionService : IBookingRedirectSessionService
         var redirectToken = GenerarRedirectToken(request, vuelo, expiracion);
         var baseUrl = _configuration["ServiciosExternos:AerolineaBaseUrl"]
                             ?? "https://aerolinea.com";
-        var redirectUrl = $"{baseUrl}/reservar?token={redirectToken}&retorno={Uri.EscapeDataString(request.UrlRetorno)}";
-
+        var redirectUrl = $"{baseUrl}/aerolinea?token={redirectToken}&retorno={Uri.EscapeDataString(request.UrlRetorno)}";
         return new BookingRedirectResponseDto
         {
             Token = redirectToken,
