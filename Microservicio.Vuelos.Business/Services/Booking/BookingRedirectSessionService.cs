@@ -91,9 +91,6 @@ public class BookingRedirectSessionService : IBookingRedirectSessionService
         new("url_retorno", request.UrlRetorno),
     };
 
-        foreach (var idAsiento in request.IdAsientos)
-            claims.Add(new Claim("id_asiento", idAsiento.ToString()));
-
         var token = new JwtSecurityToken(
             issuer: _configuration["JwtSettings:Issuer"],
             audience: _configuration["JwtSettings:Audience"],

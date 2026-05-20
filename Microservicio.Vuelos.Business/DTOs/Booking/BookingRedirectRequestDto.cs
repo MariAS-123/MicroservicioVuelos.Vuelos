@@ -9,9 +9,6 @@ public class BookingRedirectRequestDto
     [Required]
     public int IdVuelo { get; set; }
 
-    [JsonPropertyName("idAsientos")]
-    public List<int> IdAsientos { get; set; } = [];
-
     [JsonPropertyName("urlRetorno")]
     [Required]
     public string UrlRetorno { get; set; } = string.Empty;
