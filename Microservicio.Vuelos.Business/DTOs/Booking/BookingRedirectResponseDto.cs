@@ -1,13 +1,18 @@
-﻿namespace Microservicio.Vuelos.Business.DTOs.Booking;
+﻿using System.Text.Json.Serialization;
+
+namespace Microservicio.Vuelos.Business.DTOs.Booking;
 
 public class BookingRedirectResponseDto
 {
-    public string RedirectToken { get; set; } = string.Empty;
-    public string RedirectUrl { get; set; } = string.Empty;
-    public int ExpiresIn { get; set; } = 900;          // 15 minutos — fijo según contrato
-    public string TipoViaje { get; set; } = string.Empty;  // IDA · IDA_VUELTA
-    public BookingRedirectContextoDto Contexto { get; set; } = null!;
-}
+    [JsonPropertyName("token")]
+    public string Token { get; set; } = string.Empty;
+
+    [JsonPropertyName("urlRedirect")]
+    public string UrlRedirect { get; set; } = string.Empty;
+
+    [JsonPropertyName("expiracion")]
+    public DateTime Expiracion { get; set; }
+}   
 
 public class BookingRedirectContextoDto
 {

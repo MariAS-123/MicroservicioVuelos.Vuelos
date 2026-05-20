@@ -26,7 +26,7 @@ public class BookingRedirectController : ControllerBase
     /// Requiere JWT con rol INTEGRACION_BOOKING.
     /// </summary>
     [HttpPost("vuelos/sesion-redirect")]
-    [Authorize(Roles = "BOOKING")]
+    [Authorize(Roles = "BOOKING,CLIENTE,ADMINISTRADOR")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]

@@ -1,20 +1,18 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Microservicio.Vuelos.Business.DTOs.Booking;
 
 public class BookingRedirectRequestDto
 {
+    [JsonPropertyName("idVuelo")]
     [Required]
-    public int IdVueloIda { get; set; }
+    public int IdVuelo { get; set; }
 
-    public int? IdVueloRetorno { get; set; }
+    [JsonPropertyName("idAsientos")]
+    public List<int> IdAsientos { get; set; } = [];
 
+    [JsonPropertyName("urlRetorno")]
     [Required]
-    public string Clase { get; set; } = string.Empty;
-
-    [Required]
-    [Range(1, 9)]
-    public int Pasajeros { get; set; }
-
-    public string? ReferenciaBooking { get; set; }
+    public string UrlRetorno { get; set; } = string.Empty;
 }
